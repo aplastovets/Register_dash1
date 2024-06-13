@@ -55,12 +55,12 @@ if uploaded_registry is not None:
     price = False
     price = st.number_input('Введите стоимость', min_value=0.0, step=0.01)
     
-    if price is not False:
+    if price is not None:
 
         df['Сумма в иске'] = pd.to_numeric(df['Сумма в иске'], errors='coerce')
         df['Итоговые потери'] = df['Сумма в решении'] + df['Расходы юристов']
         pivot_df = df[['Юрист', 'Сумма в иске', 'Итоговые потери']].groupby(['Юрист']).sum()
-        pivot_df['Стоимоть юриста'] = 2000000
+        pivot_df['Стоимоть юриста'] = price
         pivot_df['Доходность юриста'] = pivot_df['Сумма в иске'] - pivot_df['Итоговые потери']
         pivot_df['Окупаемость юриста'] = pivot_df['Доходность юриста'] - pivot_df['Стоимоть юриста']
 
@@ -70,7 +70,7 @@ if uploaded_registry is not None:
 
         df['Текущие потери'] = df['Списали со счета'] - df['Расходы юристов']
         current_losses = df[['Юрист', 'Сумма в иске', 'Текущие потери']].groupby(['Юрист']).sum()
-        current_losses['Стоимоть юриста'] = 2000000
+        current_losses['Стоимоть юриста'] = price
         current_losses['Доходность юриста'] = current_losses['Сумма в иске'] - current_losses['Текущие потери']
         current_losses['Окупаемость юриста'] = current_losses['Доходность юриста'] - current_losses['Стоимоть юриста']
 
