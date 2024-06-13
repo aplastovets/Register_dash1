@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -21,13 +20,13 @@ if uploaded_registry is not None:
 
     # Определяем цвета для статусов
     color_map = {
-        'Выиграли': 'green',
-        'Исполнено': 'red',
-        'Мировое': 'red',
-        'Проиграли': 'red',
-        'On hold': 'yellow',
-        'В работе': 'blue',
-        'Обжалуем': 'yellow'
+        'Выиграли': '#B6E880',
+        'Исполнено': '#EF553B',
+        'Мировое': '#EF553B',
+        'Проиграли': '#EF553B',
+        'On hold': '#19D3F3',
+        'В работе': '#FECB52',
+        'Обжалуем': '#FECB52'
     }
 
     # Добавляем столбец с цветами
@@ -50,25 +49,30 @@ if uploaded_registry is not None:
                      color_discrete_map=color_map, title=f'Количество дел для юриста {юрист}')
         st.plotly_chart(fig)
 
+     
+
+    st.title('Введите стоимость Юристов')
+    price = False
+    price = st.number_input('Введите стоимость', min_value=0.0, step=0.01)
+    
+    if price is not False:
+
+        df['Сумма в иске'] = pd.to_numeric(df['Сумма в иске'], errors='coerce')
+        df['Итоговые потери'] = df['Сумма в решении'] + df['Расходы юристов']
+        pivot_df = df[['Юрист', 'Сумма в иске', 'Итоговые потери']].groupby(['Юрист']).sum()
+        pivot_df['Стоимоть юриста'] = 2000000
+        pivot_df['Доходность юриста'] = pivot_df['Сумма в иске'] - pivot_df['Итоговые потери']
+        pivot_df['Окупаемость юриста'] = pivot_df['Доходность юриста'] - pivot_df['Стоимоть юриста']
 
 
+        st.write("Если будет совсем плохо:")
+        st.write(pivot_df)
 
-    df['Сумма в иске'] = pd.to_numeric(df['Сумма в иске'], errors='coerce')
-    df['Итоговые потери'] = df['Сумма в решении'] + df['Расходы юристов']
-    pivot_df = df[['Юрист', 'Сумма в иске', 'Итоговые потери']].groupby(['Юрист']).sum()
-    pivot_df['Стоимоть юриста'] = 2000000
-    pivot_df['Доходность юриста'] = pivot_df['Сумма в иске'] - pivot_df['Итоговые потери']
-    pivot_df['Окупаемость юриста'] = pivot_df['Доходность юриста'] - pivot_df['Стоимоть юриста']
+        df['Текущие потери'] = df['Списали со счета'] - df['Расходы юристов']
+        current_losses = df[['Юрист', 'Сумма в иске', 'Текущие потери']].groupby(['Юрист']).sum()
+        current_losses['Стоимоть юриста'] = 2000000
+        current_losses['Доходность юриста'] = current_losses['Сумма в иске'] - current_losses['Текущие потери']
+        current_losses['Окупаемость юриста'] = current_losses['Доходность юриста'] - current_losses['Стоимоть юриста']
 
-
-    st.write("Если будет совсем плохо:")
-    st.write(pivot_df)
-
-    df['Текущие потери'] = df['Списали со счета'] - df['Расходы юристов']
-    current_losses = df[['Юрист', 'Сумма в иске', 'Текущие потери']].groupby(['Юрист']).sum()
-    current_losses['Стоимоть юриста'] = 2000000
-    current_losses['Доходность юриста'] = current_losses['Сумма в иске'] - current_losses['Текущие потери']
-    current_losses['Окупаемость юриста'] = current_losses['Доходность юриста'] - current_losses['Стоимоть юриста']
-
-    st.write("Наилучшие стечения обстоятельств")
-    st.write(current_losses)
+        st.write("Наилучшие стечения обстоятельств")
+        st.write(current_losses)
