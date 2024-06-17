@@ -51,28 +51,47 @@ if uploaded_registry is not None:
 
      
 
-    st.title('Введите стоимость Юристов')
-    price = False
-    price = st.number_input('Введите стоимость', min_value=0.0, step=0.01)
+
+    price = 0
+
+
+    df['Сумма в иске'] = pd.to_numeric(df['Сумма в иске'], errors='coerce')
+    df['Итоговые потери'] = df['Сумма в решении'] + df['Расходы юристов']
+    pivot_df = df[['Юрист', 'Сумма в иске', 'Итоговые потери']].groupby(['Юрист']).sum()
+    pivot_df['Стоимоть юриста'] = price
+    pivot_df['Доходность юриста'] = pivot_df['Сумма в иске'] - pivot_df['Итоговые потери']
+    pivot_df['Окупаемость юриста'] = pivot_df['Доходность юриста'] - pivot_df['Стоимоть юриста']
+    pivot_df = pivot_df.reset_index()
+
+
+    df['Текущие потери'] = df['Списали со счета'] - df['Расходы юристов']
+    current_losses = df[['Юрист', 'Сумма в иске', 'Текущие потери']].groupby(['Юрист']).sum()
+    current_losses['Стоимоть юриста'] = price
+    current_losses['Доходность юриста'] = current_losses['Сумма в иске'] - current_losses['Текущие потери']
+    current_losses['Окупаемость юриста'] = current_losses['Доходность юриста'] - current_losses['Стоимоть юриста']
+    current_losses = current_losses.reset_index()
+
     
-    if price is not None:
 
-        df['Сумма в иске'] = pd.to_numeric(df['Сумма в иске'], errors='coerce')
-        df['Итоговые потери'] = df['Сумма в решении'] + df['Расходы юристов']
-        pivot_df = df[['Юрист', 'Сумма в иске', 'Итоговые потери']].groupby(['Юрист']).sum()
-        pivot_df['Стоимоть юриста'] = price
-        pivot_df['Доходность юриста'] = pivot_df['Сумма в иске'] - pivot_df['Итоговые потери']
-        pivot_df['Окупаемость юриста'] = pivot_df['Доходность юриста'] - pivot_df['Стоимоть юриста']
+    # Форма для ввода стоимости 
+    selected_lawer = st.selectbox('Выберите работника', current_losses['Юрист'])
 
+    # Найти индекс выбранного юриста
+    index_current_losses = current_losses[current_losses['Юрист'] == selected_lawer].index[0]
+    index_pivot_df = pivot_df[pivot_df['Юрист'] == selected_lawer].index[0]
 
-        st.write("Если будет совсем плохо:")
-        st.write(pivot_df)
+    # Ввести стоимость
+    new_price = st.number_input('Введите стоимость для {}'.format(selected_lawer), min_value=0.0, step=1000.0)
 
-        df['Текущие потери'] = df['Списали со счета'] - df['Расходы юристов']
-        current_losses = df[['Юрист', 'Сумма в иске', 'Текущие потери']].groupby(['Юрист']).sum()
-        current_losses['Стоимоть юриста'] = price
-        current_losses['Доходность юриста'] = current_losses['Сумма в иске'] - current_losses['Текущие потери']
-        current_losses['Окупаемость юриста'] = current_losses['Доходность юриста'] - current_losses['Стоимоть юриста']
+    # Обновить стоимость в DataFrame при нажатии кнопки
+    if st.button('Обновить стоимость'):
 
-        st.write("Наилучшие стечения обстоятельств")
-        st.write(current_losses)
+        pivot_df.at[index_pivot_df, 'Стоимоть юриста'] = new_price
+        current_losses.at[index_current_losses, 'Стоимоть юриста'] = new_price
+        st.success('Стоимость обновлена!')
+
+    st.write("Если будет совсем плохо:")
+    st.write(pivot_df)
+
+    st.write("Наилучшие стечения обстоятельств")
+    st.write(current_losses)
